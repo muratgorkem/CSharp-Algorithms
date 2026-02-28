@@ -1,0 +1,14 @@
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.AssemblyInfoInputs.cache
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.AssemblyInfo.cs
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.csproj.CoreCompileInputs.cache
+C:\Users\Monster\OneDrive\Desktop\consoleApp\bin\Debug\net10.0\consoleApp.exe
+C:\Users\Monster\OneDrive\Desktop\consoleApp\bin\Debug\net10.0\consoleApp.deps.json
+C:\Users\Monster\OneDrive\Desktop\consoleApp\bin\Debug\net10.0\consoleApp.runtimeconfig.json
+C:\Users\Monster\OneDrive\Desktop\consoleApp\bin\Debug\net10.0\consoleApp.dll
+C:\Users\Monster\OneDrive\Desktop\consoleApp\bin\Debug\net10.0\consoleApp.pdb
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.dll
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\refint\consoleApp.dll
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.pdb
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\consoleApp.genruntimeconfig.cache
+C:\Users\Monster\OneDrive\Desktop\consoleApp\obj\Debug\net10.0\ref\consoleApp.dll
