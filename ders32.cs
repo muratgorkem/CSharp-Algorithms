@@ -21,7 +21,7 @@ aababcabcd
 aababc
 a*/
 
-    static void Main(string[] args)
+    static void Maiin(string[] args)
     {
        Console.WriteLine(Tata("abcdsab"));
        Console.WriteLine(Tata("abcdabab"));

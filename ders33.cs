@@ -7,7 +7,7 @@ using System.IO.Pipelines;
 using System.Reflection.Metadata;
 using Microsoft.VisualBasic;
 
-class Program
+class ders33
 {
     /**
    Write a C# Sharp program to check
