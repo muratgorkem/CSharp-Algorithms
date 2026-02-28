@@ -9,30 +9,51 @@ using Microsoft.VisualBasic;
 class Program
 {
     //Write a C# Sharp program to create a string
-    // made of every other character starting with 
-    // the first in a given string.
+    // like "aababcabcd" from a given string 
+    // "abcd".
+    /*
+    Sample Input:
+"abcd"
+"abc"
+"a"
+Expected Output:
+
+aababcabcd
+aababc
+a*/
+
     static void Main(string[] args)
     {
-       Console.WriteLine(Tata("Python"));
-       Console.WriteLine(Tata("PHP"));
-       Console.WriteLine(Tata("JS"));
+       Console.WriteLine(Tata("abcdsab"));
+       Console.WriteLine(Tata("abcdabab"));
+       Console.WriteLine(Tata("abcabdabab"));
+       Console.WriteLine(Tata("abcabd"));
        
     }
 
-     static public string Tata(string str)
+     static public int Tata(string str)
     {
         string result="";
+        int countt=0;
+        result += str.Substring(str.Length-2,2); 
+        // stringlerin içindeki son 2 harfi bul.
 
-        for(int i=0; i<str.Length; i++)
+        // string içinde gezinme
+        for(int i=0; i<str.Length-1; i++)
         {
-           if (i % 2 == 0)
+            string lastTwo=str.Substring(i,2);
+
+            if (lastTwo == result)
             {
-              result += str[i]; 
+                countt++;
             }
         }
-            return result;
+
+        
+        return countt-1;
     
-    }}
+    }
+    }
 
 
 
