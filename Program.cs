@@ -28,9 +28,8 @@ True
 
     static void Main(string[] args)
     {
-       Console.WriteLine(Tata(new[] {1,1,2,3,1}));
-       Console.WriteLine(Tata(new[] {1,1,2,4,1}));
-       Console.WriteLine(Tata(new[] {1,1,2,1,2,3}));
+       // ders34 örnekleri ders34.cs içinde duruyor
+       KargoOyunu.Oyna();
           
     }
 
