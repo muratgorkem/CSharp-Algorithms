@@ -1,0 +1,785 @@
+<title>Tersine Kargo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;800&display=swap">
+<style>
+/* Layout: one-screen portrait game. Gece vardiyasındaki depo: asfalt zemin, ikaz sarısı, karton kutular. */
+:root {
+  --asphalt: #1b2028;
+  --panel: #252c37;
+  --panel-2: #2f3846;
+  --line: #3c4655;
+  --hazard: #f3b51b;
+  --ink: #eef1f4;
+  --muted: #9aa6b6;
+  --good: #4cc38a;
+  --bad: #ef5b4c;
+  --card: #c8935a;
+  --card-dark: #9f6c3a;
+  --font-display: "Bungee", "Arial Black", Impact, sans-serif;
+  --font-body: "Barlow", "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: dark;
+}
+html { height: 100%; box-sizing: border-box; background: var(--asphalt); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none;
+  background: var(--asphalt); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px;
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--hazard); outline-offset: 2px; }
+
+#app {
+  position: relative; height: 100%; max-width: 520px; margin: 0 auto;
+  padding: 12px 16px; display: flex; flex-direction: column;
+}
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.hazard-band {
+  height: 10px; border-radius: 2px;
+  background: repeating-linear-gradient(-45deg, var(--hazard) 0 12px, var(--asphalt) 12px 24px);
+}
+
+/* ---------- Menü ---------- */
+#menu { justify-content: center; gap: 18px; }
+.brand { display: flex; flex-direction: column; gap: 10px; }
+.brand h1 {
+  margin: 0; font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(2.4rem, 12vw, 3.6rem); line-height: .95; color: var(--hazard);
+  text-wrap: balance;
+}
+.brand h1 span { display: block; color: var(--ink); }
+.brand p { margin: 0; color: var(--muted); font-size: .95rem; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--panel); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat small { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.stat b { font-size: 1.35rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+.pips { display: flex; gap: 4px; padding-top: 6px; }
+.pip { width: 12px; height: 12px; border-radius: 3px; background: var(--line); }
+.pip.on { background: var(--hazard); }
+.regen { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
+
+.btn {
+  border: 0; border-radius: 10px; padding: 14px 16px; background: var(--panel-2);
+  font-weight: 800; font-size: 1rem; letter-spacing: .02em; text-align: left;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.btn:active { transform: translateY(1px); filter: brightness(.95); }
+.btn.primary {
+  background: var(--hazard); color: #1b1b1b; font-family: var(--font-display); font-weight: 400;
+  font-size: 1.3rem; padding: 18px; text-align: center; justify-content: center;
+}
+.btn.ghost { background: transparent; border: 2px solid var(--line); }
+.btn small { font-weight: 600; color: var(--muted); font-size: .8rem; }
+.btn.primary small { color: #3b3216; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+.footnote { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted); font-size: .78rem; }
+.chip-btn { background: var(--panel); border: 0; border-radius: 999px; padding: 6px 12px; font-size: .8rem; font-weight: 600; }
+
+/* ---------- Oyun ---------- */
+#game { gap: 8px; }
+.hud { display: flex; align-items: center; gap: 8px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.hud .lvl { font-family: var(--font-display); font-weight: 400; color: var(--hazard); font-size: 1.05rem; }
+.hud .grow { flex: 1; min-width: 0; color: var(--muted); font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud .coins { color: var(--hazard); }
+.hearts { color: var(--bad); letter-spacing: 1px; }
+.hearts .lost { color: var(--line); }
+.icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: var(--panel); font-size: 1rem; font-weight: 800; }
+.subhud { display: flex; align-items: center; gap: 8px; }
+.timer { flex: 1; height: 10px; border-radius: 5px; background: var(--panel); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--good); border-radius: 5px; transform-origin: left; }
+.combo { font-weight: 800; font-size: .85rem; padding: 2px 8px; border-radius: 999px; background: var(--panel); color: var(--muted); font-variant-numeric: tabular-nums; }
+.combo.hot { background: var(--hazard); color: #1b1b1b; }
+
+.docks { display: grid; gap: 8px; }
+.docks.top { grid-template-columns: repeat(3, 1fr); }
+.docks.bottom { grid-template-columns: 1fr 1.2fr 1fr; align-items: stretch; }
+.dock {
+  --c: var(--line);
+  position: relative; border-radius: 10px 10px 6px 6px; padding: 26px 6px 10px; min-height: 84px;
+  background:
+    linear-gradient(var(--c), var(--c)) top / 100% 8px no-repeat,
+    repeating-linear-gradient(180deg, var(--panel-2) 0 9px, var(--panel) 9px 12px);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px;
+  text-align: center; transition: transform .15s, box-shadow .15s; min-width: 0;
+}
+.dock .d-ico { font-size: 1.5rem; line-height: 1; }
+.dock .d-name { font-size: .72rem; font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
+.dock .d-tag { position: absolute; top: 12px; left: 8px; font-size: .62rem; font-weight: 600; color: var(--muted); letter-spacing: .1em; }
+.dock.hover { transform: scale(1.05); box-shadow: 0 0 0 3px var(--c); }
+.dock.ok { box-shadow: 0 0 0 4px var(--good); }
+.dock.no { box-shadow: 0 0 0 4px var(--bad); }
+.dock.locked { visibility: hidden; }
+.dock.pit {
+  background:
+    repeating-linear-gradient(-45deg, var(--bad) 0 8px, var(--asphalt) 8px 16px) top / 100% 8px no-repeat,
+    radial-gradient(ellipse at 50% 70%, #0d0f13 0 45%, var(--panel) 46%);
+}
+.hint { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: .78rem; font-weight: 600; padding: 0 4px; }
+
+.field { position: relative; flex: 1; min-height: 180px; touch-action: none; }
+.belt {
+  position: absolute; left: -16px; right: -16px; top: 50%; height: 124px; transform: translateY(-50%);
+  background:
+    linear-gradient(var(--line), var(--line)) top / 100% 4px no-repeat,
+    linear-gradient(var(--line), var(--line)) bottom / 100% 4px no-repeat,
+    repeating-linear-gradient(90deg, #2a313c 0 26px, #232933 26px 30px);
+  background-size: 100% 4px, 100% 4px, 30px 100%;
+  animation: belt var(--belt-speed, 1.2s) linear infinite;
+}
+@keyframes belt { to { background-position: 0 0, 0 100%, 30px 0; } }
+.paused .belt { animation-play-state: paused; }
+
+.box {
+  --c: #888;
+  position: absolute; left: 50%; top: 50%; width: 104px; height: 104px; margin: -52px 0 0 -52px;
+  border-radius: 8px; touch-action: none; cursor: grab; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: linear-gradient(160deg, var(--card), var(--card-dark));
+  box-shadow: 0 10px 18px rgba(0,0,0,.45), inset 0 -4px 0 rgba(0,0,0,.18);
+  will-change: transform;
+}
+.box.dragging { cursor: grabbing; box-shadow: 0 18px 26px rgba(0,0,0,.5); }
+.box .tape { position: absolute; left: 0; right: 0; top: 0; height: 14px; background: var(--c); border-radius: 8px 8px 0 0; opacity: .95; }
+.box .ico { font-size: 2.2rem; line-height: 1; margin-top: 10px; }
+.box .lbl { font-size: .66rem; font-weight: 800; letter-spacing: .08em; color: #2b1d0f; background: rgba(255,255,255,.6); padding: 1px 6px; border-radius: 3px; max-width: 94px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.box .stamp {
+  position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%) rotate(-6deg);
+  background: var(--bad); color: #fff; font-size: .62rem; font-weight: 800; letter-spacing: .08em;
+  padding: 2px 6px; border-radius: 3px; white-space: nowrap;
+}
+.box.k-bomb { background: repeating-linear-gradient(-45deg, #3a3a3a 0 10px, #222 10px 20px); }
+.box.k-bomb .tape { background: var(--bad); }
+.box.k-bomb .lbl { background: var(--bad); color: #fff; }
+.box.k-animal { background: linear-gradient(160deg, #6fa86a, #4a7d46); }
+.box.k-animal::after { content: ""; position: absolute; inset: 22px 10px auto auto; width: 18px; height: 6px; background: radial-gradient(circle, #213620 2.5px, transparent 3px) 0 0 / 6px 6px; }
+.box.robot::before {
+  content: "ROBOT"; position: absolute; top: -24px; left: 50%; transform: translateX(-50%);
+  font-size: .62rem; font-weight: 800; letter-spacing: .12em; background: #6fd3ff; color: #08202b; padding: 2px 6px; border-radius: 3px;
+}
+.box.broken { animation: shatter .4s forwards; }
+@keyframes shatter { to { filter: grayscale(1) brightness(.6); transform: var(--end) rotate(25deg) scale(.6); opacity: 0; } }
+
+/* Tema: Neon */
+.t-neon .box { background: #160f2e; box-shadow: 0 0 0 2px var(--c), 0 0 18px var(--c); }
+.t-neon .box .lbl { background: transparent; color: var(--c); }
+.t-neon .dock { box-shadow: inset 0 0 0 1px var(--c); }
+/* Tema: Noel */
+.t-xmas .box.k-normal, .t-xmas .box.k-fragile { background: linear-gradient(160deg, #b8322b, #8d2018); }
+.t-xmas .box.k-normal .tape, .t-xmas .box.k-fragile .tape { top: 0; bottom: 0; left: 46px; right: auto; width: 12px; height: auto; border-radius: 0; background: #f6d55c; }
+.t-xmas .box .lbl { position: relative; z-index: 1; }
+.t-xmas .box .ico { position: relative; z-index: 1; }
+
+.toast {
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 6;
+  font-family: var(--font-display); font-size: 1.15rem; white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity .15s, transform .3s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, -6px); }
+.toast.good { color: var(--good); }
+.toast.bad { color: var(--bad); }
+.toast small { display: block; font-family: var(--font-body); font-weight: 600; font-size: .8rem; color: var(--ink); text-align: center; }
+
+.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translate(-8px, 3px); } 40% { transform: translate(7px, -4px); } 60% { transform: translate(-5px, 2px); } 80% { transform: translate(4px, 0); } }
+.flash { position: fixed; inset: 0; background: #ff8a3d; opacity: 0; pointer-events: none; z-index: 30; }
+.flash.on { animation: flash .45s; }
+@keyframes flash { 10% { opacity: .55; } 100% { opacity: 0; } }
+
+/* ---------- Paneller ---------- */
+.overlay {
+  position: absolute; inset: 0; z-index: 20; background: rgba(15, 18, 23, .86);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.sheet {
+  width: 100%; max-height: 100%; overflow: auto; background: var(--panel); border-radius: 14px;
+  padding: 20px 18px; display: flex; flex-direction: column; gap: 12px;
+}
+.sheet h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; color: var(--hazard); text-wrap: balance; }
+.sheet h2.bad { color: var(--bad); }
+.sheet h2.good { color: var(--good); }
+.sheet p { margin: 0; color: var(--muted); line-height: 1.45; }
+.sheet .big { font-family: var(--font-display); font-size: 2.4rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > .btn { flex: 1; min-width: 130px; justify-content: center; text-align: center; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.facts div { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.facts small { display: block; font-size: .66rem; letter-spacing: .12em; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.facts b { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.newcargo { display: flex; gap: 12px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 12px; border-left: 4px solid var(--hazard); }
+.newcargo .ni { font-size: 2rem; }
+.newcargo b { display: block; }
+.newcargo span { color: var(--muted); font-size: .9rem; }
+.item { display: flex; gap: 12px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 12px; }
+.item .ii { font-size: 1.6rem; width: 36px; text-align: center; }
+.item .it { flex: 1; min-width: 0; }
+.item .it b { display: block; }
+.item .it span { color: var(--muted); font-size: .85rem; }
+.item .lvbar { display: flex; gap: 3px; margin-top: 6px; }
+.item .lvbar i { width: 18px; height: 5px; border-radius: 2px; background: var(--line); }
+.item .lvbar i.on { background: var(--hazard); }
+.buy { border: 0; border-radius: 8px; padding: 10px 12px; background: var(--hazard); color: #1b1b1b; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.buy[disabled] { background: var(--line); color: var(--muted); cursor: default; }
+.rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.rules li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.4; }
+.rules .ri { font-size: 1.4rem; width: 32px; flex: none; text-align: center; }
+.ad-count { font-family: var(--font-display); font-size: 3.4rem; color: var(--hazard); text-align: center; }
+.swatches { display: flex; gap: 4px; }
+.swatches i { width: 14px; height: 14px; border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .belt { animation: none; }
+  .shake, .flash.on { animation: none; }
+}
+</style>
+
+<div id="app">
+  <section id="menu" class="screen">
+    <div class="hazard-band"></div>
+    <div class="brand">
+      <h1>TERSİNE<span>KARGO</span></h1>
+      <p>Bant durmuyor. Kutuyu doğru kamyona sürükle ya da fırlat; hassas eşyayı yavaşça bırak, patlayıcıyı imhaya at.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>Vardiya</small><b id="m-level">1</b></div>
+      <div class="stat"><small>Altın</small><b id="m-coins">0</b></div>
+      <div class="stat"><small>Enerji</small><div class="pips" id="m-pips"></div><span class="regen" id="m-regen"></span></div>
+    </div>
+    <div class="menu-list">
+      <button class="btn primary" id="b-play">VARDİYAYA BAŞLA</button>
+      <button class="btn" id="b-shop">Depo Mağazası <small>robot · fren · sigorta</small></button>
+      <button class="btn" id="b-themes">Temalar <small id="m-theme">Klasik Depo</small></button>
+      <button class="btn ghost" id="b-help">Nasıl oynanır?</button>
+    </div>
+    <div class="footnote">
+      <span>Reklamlar simülasyondur, gerçek reklam gösterilmez.</span>
+      <button class="chip-btn" id="b-sound">Ses: açık</button>
+    </div>
+    <div class="hazard-band"></div>
+  </section>
+
+  <section id="game" class="screen" hidden>
+    <div class="hud">
+      <span class="lvl" id="g-level">B1</span>
+      <span class="grow" id="g-pkg">Paket 1/10</span>
+      <span class="coins" id="g-earned">+0</span>
+      <span class="hearts" id="g-hearts"></span>
+      <button class="icon-btn" id="b-pause" aria-label="Duraklat">II</button>
+    </div>
+    <div class="subhud">
+      <div class="timer"><i id="g-timer"></i></div>
+      <span class="combo" id="g-combo">x1</span>
+    </div>
+    <div class="docks top" id="docks-top"></div>
+    <div class="field" id="field">
+      <div class="belt"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="docks bottom" id="docks-bottom"></div>
+  </section>
+
+  <div id="overlay" class="overlay" hidden><div class="sheet" id="sheet"></div></div>
+</div>
+<div class="flash" id="flash"></div>
+
+<script>
+(() => {
+  // ---------- Veri ----------
+  const THEMES = [
+    { id: "classic", name: "Klasik Depo", price: 0, cats: [
+      { n: "ELEKTRONİK", i: "📱", c: "#3fa7d6" }, { n: "GİYİM", i: "👕", c: "#e06bb8" }, { n: "GIDA", i: "🍎", c: "#f28c38" } ] },
+    { id: "neon", name: "Neon Kutular", price: 300, cats: [
+      { n: "NEON MAVİ", i: "💎", c: "#22e1ff" }, { n: "NEON PEMBE", i: "🎧", c: "#ff3fd8" }, { n: "NEON YEŞİL", i: "🔋", c: "#7dff5a" } ] },
+    { id: "xmas", name: "Noel Baba'nın Hediye Merkezi", price: 500, cats: [
+      { n: "OYUNCAK", i: "🧸", c: "#e8453c" }, { n: "ŞEKER", i: "🍬", c: "#f4f4f4" }, { n: "KİTAP", i: "📚", c: "#3bb273" } ] },
+  ];
+  const UPGRADES = [
+    { key: "robot", name: "Sıralama Robotu", icon: "🤖", max: 3, base: 150, desc: "Normal kutuları seviye başına %15 şansla kendisi ayırır." },
+    { key: "brake", name: "Bant Freni", icon: "🛑", max: 4, base: 100, desc: "Her kutu için +0,3 sn süre." },
+    { key: "insurance", name: "Kargo Sigortası", icon: "🛡️", max: 2, base: 200, desc: "Vardiya başına +1 hata hakkı." },
+  ];
+  const MAX_ENERGY = 5, REGEN_SEC = 120, FLING = 0.7, SAVE_KEY = "tersine-kargo-v1";
+
+  const fresh = () => ({ coins: 0, level: 1, energy: MAX_ENERGY, lastRegen: Date.now(),
+    robot: 0, brake: 0, insurance: 0, theme: 0, owned: [true, false, false], sound: true, seen: {} });
+  let S = fresh();
+  function load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if (d) S = Object.assign(fresh(), d); } catch (e) {} }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+
+  const $ = (id) => document.getElementById(id);
+  const app = $("app");
+
+  // ---------- Ses ----------
+  let ac = null;
+  function beep(freq, dur, type = "sine", vol = 0.12) {
+    if (!S.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = vol;
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+      o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+    } catch (e) {}
+  }
+  const sfx = {
+    ok: () => { beep(660, .08, "square", .06); setTimeout(() => beep(990, .1, "square", .06), 60); },
+    bad: () => beep(150, .25, "sawtooth", .08),
+    boom: () => { beep(70, .5, "sawtooth", .2); beep(45, .6, "square", .15); },
+    tick: () => beep(1200, .03, "square", .03),
+  };
+  function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+
+  // ---------- Enerji ----------
+  function updateEnergy() {
+    if (S.energy >= MAX_ENERGY) { S.lastRegen = Date.now(); return; }
+    const n = Math.floor((Date.now() - S.lastRegen) / 1000 / REGEN_SEC);
+    if (n > 0) { S.energy = Math.min(MAX_ENERGY, S.energy + n); S.lastRegen += n * REGEN_SEC * 1000; save(); }
+  }
+  const nextEnergySec = () => Math.max(0, REGEN_SEC - Math.floor((Date.now() - S.lastRegen) / 1000));
+  const fmtSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  // ---------- Menü ----------
+  function applyTheme() {
+    app.classList.remove("t-classic", "t-neon", "t-xmas");
+    app.classList.add("t-" + THEMES[S.theme].id);
+  }
+  function renderMenu() {
+    updateEnergy();
+    $("m-level").textContent = S.level;
+    $("m-coins").textContent = S.coins;
+    $("m-pips").innerHTML = Array.from({ length: MAX_ENERGY }, (_, i) => `<i class="pip${i < S.energy ? " on" : ""}"></i>`).join("");
+    $("m-regen").textContent = S.energy < MAX_ENERGY ? `+1 için ${fmtSec(nextEnergySec())}` : "Dolu";
+    $("m-theme").textContent = THEMES[S.theme].name;
+    $("b-sound").textContent = "Ses: " + (S.sound ? "açık" : "kapalı");
+    $("b-play").innerHTML = S.energy > 0 ? "VARDİYAYA BAŞLA" : "ENERJİ BİTTİ<small>&nbsp;· reklamla +1</small>";
+  }
+  function showScreen(id) {
+    $("menu").hidden = id !== "menu";
+    $("game").hidden = id !== "game";
+    if (id === "menu") renderMenu();
+  }
+  setInterval(() => { if (!$("menu").hidden) renderMenu(); }, 1000);
+
+  // ---------- Paneller ----------
+  function openSheet(html, wire) {
+    $("sheet").innerHTML = html;
+    $("overlay").hidden = false;
+    if (wire) wire($("sheet"));
+  }
+  function closeSheet() { $("overlay").hidden = true; }
+
+  function watchAd(after) {
+    let n = 3;
+    const draw = () => openSheet(`<h2>Reklam</h2><p>Burada gerçek oyunda ödüllü reklam (AdMob / Unity Ads) oynar. Bu sürümde simülasyon.</p><div class="ad-count">${n}</div>`);
+    draw();
+    const t = setInterval(() => { n--; if (n > 0) { draw(); sfx.tick(); } else { clearInterval(t); closeSheet(); after(); } }, 1000);
+  }
+
+  function openShop() {
+    const price = (u) => u.base * (S[u.key] + 1);
+    openSheet(`<h2>Depo Mağazası</h2><p>Altın: <b style="color:var(--hazard)">${S.coins}</b></p>` +
+      UPGRADES.map((u) => {
+        const lv = S[u.key], maxed = lv >= u.max;
+        return `<div class="item"><span class="ii">${u.icon}</span><div class="it"><b>${u.name}</b><span>${u.desc}</span>
+          <div class="lvbar">${Array.from({ length: u.max }, (_, i) => `<i class="${i < lv ? "on" : ""}"></i>`).join("")}</div></div>
+          <button class="buy" data-k="${u.key}" ${maxed || S.coins < price(u) ? "disabled" : ""}>${maxed ? "MAKS" : price(u) + " 🪙"}</button></div>`;
+      }).join("") + `<button class="btn ghost" data-close>Kapat</button>`,
+      (el) => {
+        el.querySelectorAll(".buy").forEach((b) => b.onclick = () => {
+          const u = UPGRADES.find((x) => x.key === b.dataset.k), p = price(u);
+          if (S.coins >= p && S[u.key] < u.max) { S.coins -= p; S[u.key]++; save(); sfx.ok(); openShop(); renderMenu(); }
+        });
+        el.querySelector("[data-close]").onclick = closeSheet;
+      });
+  }
+
+  function openThemes() {
+    openSheet(`<h2>Temalar</h2><p>Altın: <b style="color:var(--hazard)">${S.coins}</b></p>` +
+      THEMES.map((t, i) => {
+        const label = i === S.theme ? "Kullanılıyor" : S.owned[i] ? "Seç" : t.price + " 🪙";
+        const dis = i === S.theme || (!S.owned[i] && S.coins < t.price);
+        return `<div class="item"><span class="ii">${t.cats[0].i}</span><div class="it"><b>${t.name}</b>
+          <span>${t.cats.map((c) => c.n).join(" · ")}</span>
+          <div class="swatches" style="margin-top:6px">${t.cats.map((c) => `<i style="background:${c.c}"></i>`).join("")}</div></div>
+          <button class="buy" data-i="${i}" ${dis ? "disabled" : ""}>${label}</button></div>`;
+      }).join("") + `<button class="btn ghost" data-close>Kapat</button>`,
+      (el) => {
+        el.querySelectorAll(".buy").forEach((b) => b.onclick = () => {
+          const i = +b.dataset.i, t = THEMES[i];
+          if (!S.owned[i]) { if (S.coins < t.price) return; S.coins -= t.price; S.owned[i] = true; }
+          S.theme = i; save(); applyTheme(); sfx.ok(); openThemes(); renderMenu();
+        });
+        el.querySelector("[data-close]").onclick = closeSheet;
+      });
+  }
+
+  function openHelp() {
+    openSheet(`<h2>Nasıl oynanır?</h2><ul class="rules">
+      <li><span class="ri">📦</span><span>Kutuyu rengine ve etiketine göre üstteki kamyona <b>sürükle</b> ya da o yöne <b>fırlat</b>. Süre çubuğu bitmeden yetiştir.</span></li>
+      <li><span class="ri">🍷</span><span><b>Hassas eşya</b> (2. vardiya): fırlatırsan kırılır. Kamyonun üstüne yavaşça sürükle, durdur, sonra bırak.</span></li>
+      <li><span class="ri">💣</span><span><b>Patlayıcı</b> (3. vardiya): sağ alttaki İMHA çukuruna. Kamyona girerse patlar, 2 hak gider.</span></li>
+      <li><span class="ri">🐔</span><span><b>Canlı hayvan</b> (4. vardiya): sol alttaki hayvan taşıma aracına.</span></li>
+      <li><span class="ri">🔥</span><span>Art arda 5 doğru yaparsan combo çarpanı artar. Her vardiyada bant hızlanır.</span></li>
+      <li><span class="ri">⚡</span><span>Başarısız vardiya 1 enerji yer; enerji 2 dakikada bir dolar.</span></li>
+    </ul><button class="btn primary" data-close>Anladım</button>`,
+      (el) => el.querySelector("[data-close]").onclick = closeSheet);
+  }
+
+  // ---------- Oyun ----------
+  const NEW_CARGO = {
+    2: { i: "🍷", t: "Yeni: Hassas eşya", d: "Fırlatma! Kamyonun üstüne yavaşça sürükleyip bırak." },
+    3: { i: "💣", t: "Yeni: Patlayıcı", d: "Sağ alttaki İMHA çukuruna at. Kamyonda patlar." },
+    4: { i: "🐔", t: "Yeni: Canlı hayvan", d: "Sol alttaki hayvan taşıma aracına götür." },
+  };
+  let G = null;
+
+  const timePerBox = (lv) => Math.max(1100, Math.round(3600 * Math.pow(0.92, lv - 1))) + S.brake * 300;
+
+  function startLevel() {
+    updateEnergy();
+    if (S.energy <= 0) {
+      openSheet(`<h2 class="bad">Enerji bitti</h2><p>Sonraki enerji ${fmtSec(nextEnergySec())} içinde dolar. İstersen reklam izleyip hemen 1 enerji al.</p>
+        <div class="row"><button class="btn primary" data-ad>Reklam izle · +1</button><button class="btn ghost" data-close>Bekle</button></div>`,
+        (el) => {
+          el.querySelector("[data-ad]").onclick = () => watchAd(() => { S.energy++; save(); renderMenu(); startLevel(); });
+          el.querySelector("[data-close]").onclick = closeSheet;
+        });
+      return;
+    }
+    const lv = S.level, nc = NEW_CARGO[lv];
+    openSheet(`<h2>Vardiya ${lv}</h2>
+      <div class="facts"><div><small>Kutu</small><b>${8 + lv * 2}</b></div><div><small>Süre/kutu</small><b>${(timePerBox(lv) / 1000).toFixed(1)} sn</b></div><div><small>Hak</small><b>${3 + S.insurance}</b></div></div>
+      ${nc ? `<div class="newcargo"><span class="ni">${nc.i}</span><div><b>${nc.t}</b><span>${nc.d}</span></div></div>` : ""}
+      <div class="row"><button class="btn primary" data-go>BAŞLA</button><button class="btn ghost" data-close>Geri</button></div>`,
+      (el) => {
+        el.querySelector("[data-go]").onclick = () => { closeSheet(); beginLevel(); };
+        el.querySelector("[data-close]").onclick = closeSheet;
+      });
+  }
+
+  function beginLevel() {
+    const lv = S.level;
+    G = { total: 8 + lv * 2, idx: 0, maxHearts: 3 + S.insurance, misses: 0, combo: 0, earned: 0,
+      time: timePerBox(lv), cur: null, box: null, state: "idle", deadline: 0, paused: false, remain: 0 };
+    document.documentElement.style.setProperty("--belt-speed", Math.max(.25, 1.2 * Math.pow(.88, lv - 1)) + "s");
+    showScreen("game");
+    renderDocks();
+    updateHud();
+    nextBox();
+  }
+
+  function renderDocks() {
+    const t = THEMES[S.theme], lv = S.level;
+    $("docks-top").innerHTML = t.cats.map((c, i) =>
+      `<div class="dock" data-id="${i}" style="--c:${c.c}"><span class="d-tag">KAMYON ${i + 1}</span><span class="d-ico">${c.i}</span><span class="d-name">${c.n}</span></div>`).join("");
+    $("docks-bottom").innerHTML =
+      `<div class="dock${lv >= 4 ? "" : " locked"}" data-id="hayvan" style="--c:#6fa86a"><span class="d-tag">ÖZEL</span><span class="d-ico">🐔</span><span class="d-name">HAYVAN</span></div>
+       <div class="hint">Sürükle ya da fırlat.<br>Hassası yavaşça bırak.</div>
+       <div class="dock pit${lv >= 3 ? "" : " locked"}" data-id="imha" style="--c:var(--bad)"><span class="d-tag">TEHLİKE</span><span class="d-ico">🔥</span><span class="d-name">İMHA</span></div>`;
+  }
+  const activeDocks = () => [...document.querySelectorAll("#game .dock:not(.locked)")];
+
+  function updateHud() {
+    $("g-level").textContent = "V" + S.level;
+    $("g-pkg").textContent = `Kutu ${Math.min(G.idx, G.total)}/${G.total}`;
+    $("g-earned").textContent = "+" + G.earned + " 🪙";
+    const left = Math.max(0, G.maxHearts - G.misses);
+    $("g-hearts").innerHTML = "♥".repeat(left) + `<span class="lost">${"♥".repeat(G.maxHearts - left)}</span>`;
+    const mult = 1 + Math.floor(G.combo / 5);
+    $("g-combo").textContent = `x${mult}` + (G.combo ? ` · ${G.combo}` : "");
+    $("g-combo").classList.toggle("hot", mult > 1);
+  }
+
+  function pickKind() {
+    const r = Math.random() * 100, lv = S.level;
+    if (lv >= 4 && r < 12) return "animal";
+    if (lv >= 3 && r < 24) return "bomb";
+    if (lv >= 2 && r < 40) return "fragile";
+    return "normal";
+  }
+
+  function nextBox() {
+    if (G.misses >= G.maxHearts) return endLevel(false);
+    if (G.idx >= G.total) return endLevel(true);
+    G.idx++;
+    const kind = pickKind(), cat = Math.floor(Math.random() * 3);
+    G.cur = { kind, cat };
+    const c = THEMES[S.theme].cats[cat];
+    const el = document.createElement("div");
+    el.className = "box k-" + kind;
+    if (kind === "bomb") el.innerHTML = `<span class="tape"></span><span class="ico">💣</span><span class="lbl">PATLAYICI</span>`;
+    else if (kind === "animal") el.innerHTML = `<span class="tape" style="background:#2f5a2c"></span><span class="ico">🐔</span><span class="lbl">CANLI HAYVAN</span>`;
+    else {
+      el.style.setProperty("--c", c.c);
+      el.innerHTML = `<span class="tape"></span><span class="ico">${kind === "fragile" ? "🍷" : c.i}</span><span class="lbl">${c.n}</span>` +
+        (kind === "fragile" ? `<span class="stamp">KIRILIR · YAVAŞ</span>` : "");
+    }
+    el.style.transform = "translateX(-70vw)";
+    $("field").appendChild(el);
+    G.box = el;
+    G.state = "arriving";
+    updateHud();
+    setTimer(1);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transition = "transform .28s cubic-bezier(.2,.8,.3,1)";
+      el.style.transform = "translate(0,0)";
+    }));
+    setTimeout(() => {
+      if (G.box !== el) return;
+      el.style.transition = "";
+      if (kind === "normal" && Math.random() < S.robot * 0.15) {
+        G.state = "resolving";
+        el.classList.add("robot");
+        setTimeout(() => {
+          const dock = activeDocks().find((d) => d.dataset.id === String(cat));
+          flyTo(el, dock);
+          G.earned += 5; updateHud(); toast("ROBOT +5", "good", "Robot kol ayırdı"); sfx.tick();
+          setTimeout(nextBox, 420);
+        }, 350);
+        return;
+      }
+      G.state = "live";
+      G.deadline = performance.now() + G.time;
+      wireDrag(el);
+    }, 300);
+  }
+
+  function setTimer(frac) {
+    const bar = $("g-timer");
+    bar.style.transform = `scaleX(${Math.max(0, frac)})`;
+    bar.style.background = frac > .5 ? "var(--good)" : frac > .25 ? "var(--hazard)" : "var(--bad)";
+  }
+
+  function loop(now) {
+    if (G && G.state === "live" && !G.paused) {
+      const remain = G.deadline - now;
+      setTimer(remain / G.time);
+      if (remain <= 0) {
+        G.state = "resolving";
+        const el = G.box;
+        el.style.transition = "transform .45s ease-in, opacity .45s";
+        el.style.transform = "translate(0, 140px) rotate(35deg)";
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 500);
+        judge("late");
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Sürükle / fırlat
+  function wireDrag(el) {
+    let drag = null;
+    const hoverDock = (x, y) => activeDocks().find((d) => { const r = d.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+    el.onpointerdown = (e) => {
+      if (G.state !== "live" || G.paused) return;
+      e.preventDefault();
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      drag = { x0: e.clientX, y0: e.clientY, pts: [{ x: e.clientX, y: e.clientY, t: performance.now() }] };
+      el.classList.add("dragging");
+    };
+    el.onpointermove = (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+      el.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.04}deg)`;
+      drag.pts.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+      if (drag.pts.length > 12) drag.pts.shift();
+      const h = hoverDock(e.clientX, e.clientY);
+      activeDocks().forEach((d) => d.classList.toggle("hover", d === h));
+    };
+    const release = (e, cancelled) => {
+      if (!drag) return;
+      const d = drag; drag = null;
+      el.classList.remove("dragging");
+      activeDocks().forEach((x) => x.classList.remove("hover"));
+      if (G.state !== "live") return;
+      const now = performance.now();
+      const ref = d.pts.find((p) => now - p.t <= 90) || d.pts[d.pts.length - 1];
+      const last = d.pts[d.pts.length - 1];
+      const dt = Math.max(16, now - ref.t);
+      const vx = (e.clientX - ref.x) / dt, vy = (e.clientY - ref.y) / dt;
+      const speed = Math.hypot(vx, vy) * (now - last.t > 120 ? 0 : 1); // durup bırakınca hız sıfır
+      const moved = Math.hypot(e.clientX - d.x0, e.clientY - d.y0);
+      if (cancelled) return snapBack(el);
+      let dock = hoverDock(e.clientX, e.clientY), thrown = speed > FLING;
+      if (!dock && thrown && moved > 20) dock = dockInDirection(el, vx, vy);
+      if (!dock) return snapBack(el);
+      land(el, dock, thrown);
+    };
+    el.onpointerup = (e) => release(e, false);
+    el.onpointercancel = (e) => release(e, true);
+  }
+
+  function dockInDirection(el, vx, vy) {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const a = Math.atan2(vy, vx);
+    let best = null, bestDiff = Infinity;
+    activeDocks().forEach((d) => {
+      const dr = d.getBoundingClientRect();
+      const b = Math.atan2(dr.top + dr.height / 2 - cy, dr.left + dr.width / 2 - cx);
+      let diff = Math.abs(a - b); if (diff > Math.PI) diff = 2 * Math.PI - diff;
+      if (diff < bestDiff) { bestDiff = diff; best = d; }
+    });
+    return bestDiff < 0.75 ? best : null;
+  }
+
+  function snapBack(el) {
+    el.style.transition = "transform .2s";
+    el.style.transform = "translate(0,0)";
+    setTimeout(() => { el.style.transition = ""; }, 220);
+  }
+
+  function flyTo(el, dock, keep) {
+    const home = $("field").getBoundingClientRect(), dr = dock.getBoundingClientRect();
+    const tx = dr.left + dr.width / 2 - (home.left + home.width / 2);
+    const ty = dr.top + dr.height / 2 - (home.top + home.height / 2);
+    const end = `translate(${tx}px, ${ty}px)`;
+    el.style.setProperty("--end", end);
+    el.style.transition = "transform .22s ease-in, opacity .22s";
+    el.style.transform = end + " scale(.45)";
+    if (!keep) el.style.opacity = ".2";
+    setTimeout(() => el.remove(), keep ? 650 : 260);
+  }
+
+  function land(el, dock, thrown) {
+    G.state = "resolving";
+    el.onpointerdown = el.onpointermove = el.onpointerup = el.onpointercancel = null;
+    const id = dock.dataset.id, { kind, cat } = G.cur;
+    let res;
+    if (kind === "bomb") res = id === "imha" ? "ok" : "boom";
+    else if (kind === "animal") res = id === "hayvan" ? "ok" : id === "imha" ? "animalPit" : "wrong";
+    else if (kind === "fragile") res = id === String(cat) ? (thrown ? "broke" : "ok") : "wrong";
+    else res = id === String(cat) ? "ok" : id === "imha" ? "trashed" : "wrong";
+
+    if (res === "broke") { flyTo(el, dock, true); el.classList.add("broken"); }
+    else flyTo(el, dock);
+    dock.classList.add(res === "ok" ? "ok" : "no");
+    setTimeout(() => dock.classList.remove("ok", "no"), 380);
+    judge(res);
+  }
+
+  function judge(res) {
+    const special = G.cur.kind !== "normal";
+    if (res === "ok") {
+      G.combo++;
+      const pts = (special ? 20 : 10) * (1 + Math.floor(G.combo / 5));
+      G.earned += pts;
+      toast(`+${pts}`, "good", G.combo % 5 === 0 ? `Combo x${1 + Math.floor(G.combo / 5)}!` : "");
+      sfx.ok();
+    } else {
+      G.combo = 0;
+      const msg = {
+        wrong: ["YANLIŞ KAMYON", "Etikete bak"],
+        broke: ["KIRILDI!", "Hassas eşya fırlatılmaz"],
+        boom: ["BOOM!", "Patlayıcı kamyonda patladı · −2 hak"],
+        late: ["DÜŞTÜ", "Bant kutuyu yere attı"],
+        trashed: ["İMHA EDİLDİ", "Sağlam kargoyu yaktın"],
+        animalPit: ["OLMAZ!", "Hayvan imhaya gitmez"],
+      }[res];
+      G.misses += res === "boom" ? 2 : 1;
+      toast(msg[0], "bad", msg[1]);
+      if (res === "boom") {
+        sfx.boom(); buzz([60, 40, 120]);
+        $("flash").classList.remove("on"); void $("flash").offsetWidth; $("flash").classList.add("on");
+      } else { sfx.bad(); buzz(80); }
+      app.classList.remove("shake"); void app.offsetWidth; app.classList.add("shake");
+    }
+    updateHud();
+    setTimeout(nextBox, res === "ok" ? 300 : 650);
+  }
+
+  let toastTimer = 0;
+  function toast(text, kind, sub) {
+    const t = $("toast");
+    t.className = "toast " + kind;
+    t.innerHTML = text + (sub ? `<small>${sub}</small>` : "");
+    void t.offsetWidth;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 650);
+  }
+
+  function clearField() {
+    document.querySelectorAll("#field .box").forEach((b) => b.remove());
+  }
+
+  function endLevel(win) {
+    G.state = "over";
+    clearField();
+    if (win) {
+      const bonus = S.level * 20;
+      let total = G.earned + bonus;
+      const done = (amount) => {
+        S.coins += amount; S.level++; save();
+        closeSheet(); showScreen("menu");
+      };
+      openSheet(`<h2 class="good">Vardiya ${S.level} tamam</h2>
+        <p>Toplanan ${G.earned} + vardiya bonusu ${bonus}</p>
+        <div class="big">${total} 🪙</div>
+        <div class="row"><button class="btn primary" data-ad>Reklam izle · ×3</button><button class="btn ghost" data-take>Al ve devam</button></div>`,
+        (el) => {
+          el.querySelector("[data-ad]").onclick = () => watchAd(() => {
+            total *= 3;
+            openSheet(`<h2 class="good">Üç katı!</h2><div class="big">${total} 🪙</div><button class="btn primary" data-take>Al ve devam</button>`,
+              (e2) => e2.querySelector("[data-take]").onclick = () => done(total));
+          });
+          el.querySelector("[data-take]").onclick = () => done(total);
+        });
+      sfx.ok();
+    } else {
+      updateEnergy();
+      S.energy = Math.max(0, S.energy - 1);
+      const kept = Math.floor(G.earned / 2);
+      S.coins += kept; save();
+      openSheet(`<h2 class="bad">Depo karıştı</h2>
+        <p>Hata hakların bitti. Kazancın yarısı kurtarıldı, 1 enerji gitti.</p>
+        <div class="big">+${kept} 🪙</div>
+        <div class="row"><button class="btn primary" data-retry>Tekrar dene</button><button class="btn ghost" data-menu>Menü</button></div>`,
+        (el) => {
+          el.querySelector("[data-retry]").onclick = () => { closeSheet(); showScreen("menu"); startLevel(); };
+          el.querySelector("[data-menu]").onclick = () => { closeSheet(); showScreen("menu"); };
+        });
+    }
+  }
+
+  // Duraklat
+  function pause() {
+    if (!G || G.state === "over" || G.paused || $("game").hidden) return;
+    G.paused = true; G.remain = G.deadline - performance.now();
+    app.classList.add("paused");
+    openSheet(`<h2>Mola</h2><p>Bant durdu. Vardiyadan çıkarsan bu vardiyanın kazancı silinir, enerji gitmez.</p>
+      <div class="row"><button class="btn primary" data-resume>Devam</button><button class="btn ghost" data-quit>Vardiyadan çık</button></div>`,
+      (el) => {
+        el.querySelector("[data-resume]").onclick = () => {
+          closeSheet(); G.paused = false; app.classList.remove("paused");
+          G.deadline = performance.now() + G.remain;
+        };
+        el.querySelector("[data-quit]").onclick = () => {
+          closeSheet(); G.state = "over"; G.paused = false; app.classList.remove("paused");
+          clearField(); showScreen("menu");
+        };
+      });
+  }
+  $("b-pause").onclick = pause;
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+
+  // ---------- Bağlantılar ----------
+  $("b-play").onclick = startLevel;
+  $("b-shop").onclick = openShop;
+  $("b-themes").onclick = openThemes;
+  $("b-help").onclick = openHelp;
+  $("b-sound").onclick = () => { S.sound = !S.sound; save(); renderMenu(); sfx.tick(); };
+
+  function start(data) {
+    if (data && data.S) S = Object.assign(fresh(), data.S); else load();
+    applyTheme();
+    showScreen("menu");
+  }
+  window.claude?.hot?.snapshot?.(() => ({ S }));
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
